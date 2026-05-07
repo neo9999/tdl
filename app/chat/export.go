@@ -41,13 +41,15 @@ type ExportOptions struct {
 }
 
 type Message struct {
-	ID         int         `json:"id"`
-	Type       string      `json:"type"`
-	File       string      `json:"file"`
-	Date       int         `json:"date,omitempty"`
-	Text       string      `json:"text,omitempty"`
-	SenderName string      `json:"sender_name,omitempty"`
-	Raw        *tg.Message `json:"raw,omitempty"`
+	ID           int         `json:"id"`
+	Type         string      `json:"type"`
+	File         string      `json:"file"`
+	Date         string      `json:"date,omitempty"`
+	Text         string      `json:"text,omitempty"`
+	SenderName   string      `json:"sender_name,omitempty"`
+	ReplyToMsgID int         `json:"reply_to_msg_id,omitempty"`
+	FwdFrom      any         `json:"fwd_from,omitempty"`
+	Raw          *tg.Message `json:"raw,omitempty"`
 }
 
 // ExportType
@@ -206,15 +208,34 @@ loop:
 				}
 			}
 		}
+
+		var replyToMsgID int
+		if m.ReplyTo != nil {
+			if header, ok := m.ReplyTo.(*tg.MessageReplyHeader); ok {
+				replyToMsgID = header.ReplyToMsgID
+			}
+		}
+
+		var dateStr string
+		if m.Date != 0 {
+			dateStr = time.Unix(int64(m.Date), 0).Format("2006-01-02 15:04:05")
+		}
+
+		var fwdFrom any
+		if header, ok := m.GetFwdFrom(); ok && header.FromID != nil {
+			fwdFrom = header
+		}
 		
 		t := &Message{
-			ID:         m.ID,
-			Type:       "message",
-			File:       fileName,
-			SenderName: senderName,
+			ID:           m.ID,
+			Type:         "message",
+			File:         fileName,
+			SenderName:   senderName,
+			ReplyToMsgID: replyToMsgID,
+			FwdFrom:      fwdFrom,
 		}
 		if opts.WithContent {
-			t.Date = m.Date
+			t.Date = dateStr
 			t.Text = m.Message
 		}
 		if opts.Raw {
