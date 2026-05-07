@@ -41,12 +41,13 @@ type ExportOptions struct {
 }
 
 type Message struct {
-	ID   int         `json:"id"`
-	Type string      `json:"type"`
-	File string      `json:"file"`
-	Date int         `json:"date,omitempty"`
-	Text string      `json:"text,omitempty"`
-	Raw  *tg.Message `json:"raw,omitempty"`
+	ID         int         `json:"id"`
+	Type       string      `json:"type"`
+	File       string      `json:"file"`
+	Date       int         `json:"date,omitempty"`
+	Text       string      `json:"text,omitempty"`
+	SenderName string      `json:"sender_name,omitempty"`
+	Raw        *tg.Message `json:"raw,omitempty"`
 }
 
 // ExportType
@@ -191,10 +192,26 @@ loop:
 		if media != nil { // #207
 			fileName = media.Name
 		}
+		
+		var senderName string
+		if m.FromID != nil {
+			id := tutil.GetPeerID(m.FromID)
+			if user, ok := msg.Entities.User(id); ok {
+				senderName = user.FirstName
+				if user.LastName != "" {
+					senderName += " " + user.LastName
+				}
+				if senderName == "" {
+					senderName = user.Username
+				}
+			}
+		}
+		
 		t := &Message{
-			ID:   m.ID,
-			Type: "message",
-			File: fileName,
+			ID:         m.ID,
+			Type:       "message",
+			File:       fileName,
+			SenderName: senderName,
 		}
 		if opts.WithContent {
 			t.Date = m.Date
