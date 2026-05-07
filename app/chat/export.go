@@ -48,6 +48,7 @@ type Message struct {
 	Text         string      `json:"text,omitempty"`
 	SenderName   string      `json:"sender_name,omitempty"`
 	ReplyToMsgID int         `json:"reply_to_msg_id,omitempty"`
+	ReplyToTopID int         `json:"reply_to_top_id,omitempty"`
 	FwdFrom      any         `json:"fwd_from,omitempty"`
 	Raw          *tg.Message `json:"raw,omitempty"`
 }
@@ -210,9 +211,11 @@ loop:
 		}
 
 		var replyToMsgID int
+		var replyToTopID int
 		if m.ReplyTo != nil {
 			if header, ok := m.ReplyTo.(*tg.MessageReplyHeader); ok {
 				replyToMsgID = header.ReplyToMsgID
+				replyToTopID = header.ReplyToTopID
 			}
 		}
 
@@ -232,6 +235,7 @@ loop:
 			File:         fileName,
 			SenderName:   senderName,
 			ReplyToMsgID: replyToMsgID,
+			ReplyToTopID: replyToTopID,
 			FwdFrom:      fwdFrom,
 		}
 		if opts.WithContent {
